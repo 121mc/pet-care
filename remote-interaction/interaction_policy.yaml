@@ -1,0 +1,59 @@
+safety:
+  require_explicit_hardware_enable: true
+  global_cooldown_seconds: 120
+  max_action_duration_seconds: 30
+  stop_on_driver_error: true
+
+states:
+  calm:
+    should_interact: false
+    actions: []
+    owner_message: Record only.
+  resting:
+    should_interact: false
+    actions: []
+    owner_message: Avoid disturbing the pet.
+  bored:
+    should_interact: true
+    actions:
+      - short_play
+    owner_message: Offer a short low-intensity play session.
+  anxious:
+    should_interact: true
+    actions:
+      - soothing_voice
+      - soft_light
+    owner_message: Prefer calm voice and low-intensity cues.
+  alert:
+    should_interact: false
+    actions:
+      - notify_owner
+    owner_message: Notify the owner instead of forcing interaction.
+  unknown:
+    should_interact: false
+    actions:
+      - observe
+    owner_message: Observe or request clearer video.
+
+actions:
+  none:
+    required_capability: none
+    intensity: none
+  observe:
+    required_capability: none
+    intensity: none
+  notify_owner:
+    required_capability: notify_owner
+    intensity: none
+  soothing_voice:
+    required_capability: audio_playback
+    intensity: low
+    max_duration_seconds: 20
+  soft_light:
+    required_capability: light_signal
+    intensity: low
+    max_duration_seconds: 20
+  short_play:
+    required_capability: short_play
+    intensity: medium
+    max_duration_seconds: 15

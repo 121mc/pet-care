@@ -1,0 +1,4 @@
+interface:
+  display_name: "Pet Care"
+  short_description: "Pet video state and safe interaction loop."
+  default_prompt: "Use $pet-care to analyze a pet video, assess the pet state, and decide whether safe interaction should run."

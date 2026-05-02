@@ -1,0 +1,11 @@
+runs/
+captures/
+processed_frames/
+*.mp4
+*.avi
+*.mov
+*.mkv
+__pycache__/
+*.pyc
+.venv/
+venv/
