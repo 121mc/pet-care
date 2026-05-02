@@ -5,6 +5,12 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from shared.config_loader import default_config_path, load_config, section
+
 
 ALLOWED_STATES = {"calm", "resting", "bored", "anxious", "alert", "unknown"}
 ALLOWED_RISKS = {"low", "medium", "high", "unknown"}
@@ -92,12 +98,29 @@ def normalize(data, minimum_confidence):
     }
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Normalize OpenClaw pet state JSON.")
+def parse_args(argv=None):
+    base_parser = argparse.ArgumentParser(add_help=False)
+    base_parser.add_argument("--config", default=str(default_config_path(__file__)))
+    known, _ = base_parser.parse_known_args(argv)
+    config = load_config(known.config)
+    defaults = section(config, "state_assessment")
+
+    parser = argparse.ArgumentParser(
+        description="Normalize OpenClaw pet state JSON.",
+        parents=[base_parser],
+    )
     parser.add_argument("--model-json", required=True)
-    parser.add_argument("--output-json", default="runs/latest/state_result.json")
-    parser.add_argument("--minimum-confidence", type=float, default=0.65)
-    args = parser.parse_args()
+    parser.add_argument("--output-json", default=defaults.get("output_json", "runs/latest/state_result.json"))
+    parser.add_argument(
+        "--minimum-confidence",
+        type=float,
+        default=defaults.get("minimum_confidence_for_interaction", 0.65),
+    )
+    return parser.parse_args(argv)
+
+
+def main(argv=None):
+    args = parse_args(argv)
 
     try:
         data = parse_jsonish(args.model_json)

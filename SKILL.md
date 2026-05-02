@@ -1,6 +1,6 @@
 ---
 name: pet-care
-description: Analyze pet camera feeds or user-provided pet videos, extract privacy-protected screenshots, assess pet state through OpenClaw multimodal reasoning, and optionally coordinate safe hardware interaction for anxious, bored, alert, resting, or calm pets.
+description: Analyze pet camera feeds or user-provided pet videos, automatically detect pet regions, output only privacy-redacted pet frames or reject videos with too few valid detections, assess pet state through OpenClaw multimodal reasoning only from safe frames, and optionally coordinate safe hardware interaction for anxious, bored, alert, resting, or calm pets.
 ---
 
 # Pet Care
@@ -17,14 +17,14 @@ Prefer user-provided video when a path is supplied. Use a camera only when no vi
 
 ## Resource Map
 
-- `config.yaml`: default runtime settings for capture, frame extraction, privacy, state thresholds, and safety.
+- `config.yaml`: default runtime settings for capture, frame extraction, privacy gate thresholds, state thresholds, and safety.
 - `hardware_registry.yaml`: hardware inventory and call mapping. It is intentionally empty until real devices are connected.
 - `video-acquisition/`: camera or video-source handling.
-- `data-processing/`: frame extraction and privacy-preserving pet-focused blur.
+- `data-processing/`: automatic pet detection, frame resampling, irreversible redaction, and reject handling.
 - `state-assessment/`: OpenClaw prompt template and JSON normalization.
 - `remote-interaction/`: safety policy, hardware dispatch, and drivers.
 
-Read the module `guide.md` only when working in that module. Run scripts from the skill root unless a guide says otherwise.
+Read the module `guide.md` only when working in that module. Run scripts from the skill root unless a guide says otherwise. Scripts read `config.yaml` for defaults; command-line flags may override those defaults for a single run.
 
 ## Workflow
 
@@ -35,19 +35,26 @@ Read the module `guide.md` only when working in that module. Run scripts from th
 
 2. Process video.
    - Run `data-processing/extract_and_blur_frames.py` on the selected video.
-   - Keep only the pet region clear. Blur everything else.
-   - Produce a frame manifest with timestamps, file paths, privacy status, and pet-box metadata.
+   - Use automatic pet detection only. Do not use manual boxes, motion-only boxes, or center fallback.
+   - Discard frames where no pet is detected; do not write them as output images.
+   - If too few usable frames are found, resample the video at different offsets for up to three passes.
+   - If the usable frame count is still below the configured minimum, reject the video and tell the user a clearer pet video is needed.
+   - On success, output only privacy-redacted frames with detected pet regions visible.
 
 3. Assess state with OpenClaw.
+   - Continue only when `frames_manifest.json` has `status: ok`.
+   - If data processing returns `status: rejected`, report that message to the user and do not call OpenClaw.
+   - Send only frames listed in the successful `frames_manifest.json`.
    - Load `state-assessment/prompt_template.md`.
-   - Inspect the processed screenshots and output only the required JSON shape.
+   - Inspect only the processed privacy-redacted screenshots and output only the required JSON shape.
    - Normalize or validate the model JSON with `state-assessment/aggregate_state.py`.
 
 4. Interact safely.
    - Read `remote-interaction/interaction_policy.yaml`.
    - Read `hardware_registry.yaml`.
    - If no enabled hardware matches the recommended action, tell the user the assessment and skip execution.
-   - Execute hardware only when explicitly allowed for the run.
+   - Execute hardware only when explicitly allowed for the run with `--allow-hardware`.
+   - Enforce cooldown, action duration, intensity, and driver-error handling before calling a device driver.
 
 5. Report to the user.
    - Include the state, confidence, key visual evidence, recommended action, and whether hardware ran.
@@ -83,8 +90,11 @@ OpenClaw state assessment must produce JSON compatible with:
 ## Safety Rules
 
 - Default to observation and reporting when evidence is weak.
+- Reject videos with too few automatically detected pet frames.
+- Never use center crop or motion-only fallback as a privacy-safe pet region.
 - Never force hardware interaction for `resting`, `calm`, `unknown`, or high-risk `alert` states.
 - Require explicit hardware enablement before executing real devices.
 - Respect cooldown, duration, and intensity limits in `interaction_policy.yaml`.
 - Stop or skip interaction when a device returns an error, a pet is near moving machinery, or the action may startle the pet.
-- Never expose unblurred home screenshots unless the user specifically supplied them for direct inspection.
+- Never expose unredacted home screenshots unless the user specifically supplied them for direct inspection.
+- Never send discarded, partial, uncertain, or rejected frames to OpenClaw or another external model.

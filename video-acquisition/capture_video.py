@@ -5,6 +5,12 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from shared.config_loader import default_config_path, load_config, section
+
 
 def utc_now():
     return datetime.now(timezone.utc).isoformat()
@@ -129,14 +135,35 @@ def capture_from_camera(output_dir, camera_index, duration_seconds, fps):
     return 0
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Resolve or capture a pet-care video source.")
+def parse_args(argv=None):
+    base_parser = argparse.ArgumentParser(add_help=False)
+    base_parser.add_argument("--config", default=str(default_config_path(__file__)))
+    known, _ = base_parser.parse_known_args(argv)
+    config = load_config(known.config)
+    defaults = section(config, "video_acquisition")
+
+    parser = argparse.ArgumentParser(
+        description="Resolve or capture a pet-care video source.",
+        parents=[base_parser],
+    )
     parser.add_argument("--video-path", default=None, help="Existing video path. Skips camera capture.")
-    parser.add_argument("--output-dir", default="runs/latest/acquisition")
-    parser.add_argument("--camera-index", type=int, default=0)
-    parser.add_argument("--duration-seconds", type=float, default=20.0)
-    parser.add_argument("--fps", type=int, default=15)
-    args = parser.parse_args()
+    parser.add_argument("--output-dir", default=defaults.get("output_dir", "runs/latest/acquisition"))
+    parser.add_argument(
+        "--camera-index",
+        type=int,
+        default=defaults.get("default_camera_index", 0),
+    )
+    parser.add_argument(
+        "--duration-seconds",
+        type=float,
+        default=defaults.get("default_duration_seconds", 20.0),
+    )
+    parser.add_argument("--fps", type=int, default=defaults.get("default_fps", 15))
+    return parser.parse_args(argv)
+
+
+def main(argv=None):
+    args = parse_args(argv)
 
     output_dir = Path(args.output_dir)
     try:

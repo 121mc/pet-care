@@ -16,6 +16,8 @@ Run from the skill root:
 python video-acquisition/capture_video.py --output-dir runs/latest/acquisition
 ```
 
+Defaults are read from the `video_acquisition` section of `config.yaml`. Command-line flags override those defaults for one run.
+
 Use an existing video:
 
 ```bash

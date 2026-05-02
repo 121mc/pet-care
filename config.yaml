@@ -7,13 +7,26 @@ video_acquisition:
 data_processing:
   frame_interval_seconds: 1.0
   max_frames: 30
+  min_usable_frames: 3
+  sampling_passes: 3
   output_dir: runs/latest/processed_frames
-  blur_kernel_size: 61
-  fallback_pet_box: center
-  min_pet_box_area_ratio: 0.03
+  detector_model: yolov8n.pt
+  detection_confidence_threshold: 0.35
+  pet_class_names:
+    - cat
+    - dog
+    - bird
+    - horse
+    - sheep
+    - cow
+  box_padding_ratio: 0.08
+  redaction_block_size: 61
+  redaction_mode: solid
 
 state_assessment:
   minimum_confidence_for_interaction: 0.65
+  minimum_pet_box_confidence_for_assessment: 0.8
+  assessment_input_manifest: runs/latest/assessment_input_manifest.json
   output_json: runs/latest/state_result.json
   allowed_states:
     - calm
@@ -24,13 +37,16 @@ state_assessment:
     - unknown
 
 remote_interaction:
+  registry: hardware_registry.yaml
+  policy: remote-interaction/interaction_policy.yaml
   allow_hardware_by_default: false
   dry_run_by_default: true
   log_path: runs/latest/interaction_log.json
   global_cooldown_seconds: 120
 
 privacy:
-  blur_non_pet_regions: true
+  redact_non_pet_regions: true
   discard_low_confidence_frames: false
+  block_uncertain_frames_from_assessment: true
   keep_original_video_local_only: true
   share_processed_frames_only: true

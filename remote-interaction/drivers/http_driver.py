@@ -12,7 +12,14 @@ def send_action(device, action):
     url = base_url + "/" + str(endpoint).lstrip("/")
     method = str(action.get("method", "POST")).upper()
     timeout = float(device.get("timeout_seconds", 5.0))
-    payload = action.get("payload", {"action": action["id"]})
+    payload = action.get(
+        "payload",
+        {
+            "action": action["id"],
+            "intensity": action.get("intensity"),
+            "max_duration_seconds": action.get("max_duration_seconds"),
+        },
+    )
 
     data = None
     headers = {"Content-Type": "application/json"}
