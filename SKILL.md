@@ -40,6 +40,7 @@ Read the module `guide.md` only when working in that module. Run scripts from th
    - If too few usable frames are found, resample the video at different offsets for up to three passes.
    - If the usable frame count is still below the configured minimum, reject the video and tell the user a clearer pet video is needed.
    - On success, output only privacy-redacted frames with detected pet regions visible.
+   - Treat detector class labels as localization diagnostics only. Do not report cat, dog, or multiple pets based on `pet_label` or `detector_pet_class`.
 
 3. Assess state with OpenClaw.
    - Continue only when `frames_manifest.json` has `status: ok`.
@@ -47,6 +48,7 @@ Read the module `guide.md` only when working in that module. Run scripts from th
    - Send only frames listed in the successful `frames_manifest.json`.
    - Load `state-assessment/prompt_template.md`.
    - Inspect only the processed privacy-redacted screenshots and output only the required JSON shape.
+   - Infer species only from the redacted screenshots or explicit user wording; if uncertain, describe the animal as a pet.
    - Normalize or validate the model JSON with `state-assessment/aggregate_state.py`.
 
 4. Interact safely.

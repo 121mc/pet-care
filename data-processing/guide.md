@@ -72,3 +72,8 @@ For rejected videos:
 - `sampling_passes_completed`
 - `frames`: protected output frame metadata when successful
 - `message`: what to tell the user when rejected
+
+Frame metadata uses `pet_label: "pet"` for all successful detections. Raw detector
+classes are stored only in `detector_pet_class` and
+`detector_pet_class_confidence` for diagnostics; do not use those fields to tell
+the user whether the animal is a cat or dog.

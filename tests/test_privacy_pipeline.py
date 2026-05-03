@@ -118,7 +118,12 @@ class PrivacyPipelineTests(unittest.TestCase):
             self.assertEqual(frame["pet_box_method"], "detector")
             self.assertEqual(frame["privacy_status"], "protected")
             self.assertTrue(frame["share_allowed"])
-            self.assertEqual(frame["pet_label"], "dog")
+            self.assertEqual(frame["pet_label"], "pet")
+            self.assertEqual(frame["detector_pet_class"], "dog")
+            self.assertAlmostEqual(frame["detector_pet_class_confidence"], 0.93)
+            self.assertTrue(
+                manifest["privacy_policy"]["detector_class_labels_are_localization_only"]
+            )
 
             image = cv2.imread(frame["processed_frame_path"])
             self.assertIsNotNone(image)

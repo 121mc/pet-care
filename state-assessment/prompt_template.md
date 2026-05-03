@@ -2,6 +2,8 @@
 
 Inspect the privacy-protected pet screenshots as a short time sequence. Use only observable evidence from the screenshots and any provided timestamps.
 
+Determine species only from the screenshots or from an explicit user statement. Ignore detector class metadata such as `pet_label`, `detector_pet_class`, `cat`, or `dog`; those fields are for locating the pet region and may be wrong. If species is uncertain, say pet or animal instead of cat or dog.
+
 Classify the pet into exactly one state:
 
 - `calm`
